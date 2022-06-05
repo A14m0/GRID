@@ -3,5 +3,6 @@
 
 # Medium Priority Tasks
  - [ ] libGRID: Replace Err(String) with actual error types
+ - [ ] libGRID: Implement tests for functions
 
 # Low Priority Tasks
