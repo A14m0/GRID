@@ -5,5 +5,5 @@ but that will be down the road a little bit
 
 mod client;
 mod definitions;
-//mod server;
+mod server;
 
