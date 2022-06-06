@@ -9,8 +9,67 @@ use rustls::{
     ServerConnection
 };
 
+use rcgen::generate_simple_self_signed;
+
 
 use crate::definitions::string_to_domain;
+
+
+
+
+/// defines a structure for holding certificates and private keys
+#[derive(Clone)]
+pub struct CertificateStore {
+    priv_key: Vec<u8>,
+    ocsp: Vec<u8>,
+    domains: Vec<String>,
+}
+
+impl CertificateStore {
+    /// Creates a new `CertificateStore` instance
+    /// 
+    /// ## Params:
+    /// * priv_key: private key as a vector of bytes in PKCS#8 format  
+    /// * ocsp: ???
+    /// * domains: vector of all domain names the X.509 certificate is valid for
+    /// 
+    /// ## Returns:
+    /// * instance of the structure
+    fn new(priv_key: Vec<u8>, ocsp: Vec<u8>, domains: Vec<String>) -> Self {
+        CertificateStore{priv_key, ocsp, domains}
+    }
+
+    /// Returns the private key of the certificate
+    /// 
+    /// ## Params:
+    /// None
+    /// 
+    /// ## Returns:
+    /// * a rustls::PrivateKey structure
+    fn get_privkey(self) -> rustls::PrivateKey {
+        rustls::PrivateKey(self.priv_key.clone())
+    }
+
+    fn get_ocsp(self) -> Vec<u8> {
+        self.ocsp.clone()
+    }
+
+    fn get_domains(self) -> Vec<String> {
+        self.domains.clone()
+    }
+
+    /// Generates a vector of rustls certificates 
+    /// 
+    /// ## Params: 
+    /// None
+    /// 
+    /// ## Returns:
+    /// * Ok: returns a vector of `rustls::Certificate` structures
+    /// * Err: returns a string describing the issue encountered
+    fn get_certificates(self) -> Result<Vec<rustls::Certificate>,String> {
+        todo!()
+    }
+}
 
 
 /// structure defining a GRID client instance
@@ -18,12 +77,6 @@ pub struct GridServer {
     socket: TcpListener,
     remote: ServerConnection,
     tls_config: Arc<ServerConfig>
-}
-
-
-/// defines a structure for holding certificates and private keys
-pub struct CertificateStore {
-    
 }
 
 impl GridServer {
@@ -36,19 +89,22 @@ impl GridServer {
     /// Returns either an intsance of the structure or an error string describing the issue encountered
     fn new(port: u16, certs: Option<CertificateStore>) -> Result<Self, String>{
         // see if we need to load certificates from default location or if they're pre-provided
-        if let c = Some(certs) {
+        let c = match certs {
+            Some(a) => a,
+            None => gen_certificate(None)?
+        };
 
-        }
-        let privkey = ;
-        let ocsp = ;
+        let certificates = c.clone().get_certificates()?;
+        let privkey = c.clone().get_privkey();
+        let ocsp = c.get_ocsp();
         
 
         // build a rustls configuration using the new TLS store
         let config = ServerConfig::builder()
             .with_safe_defaults()
             .with_no_client_auth()
-            .with_single_cert_with_ocsp_and_sct(certs, privkey, ocsp, vec![])
-            .expect("bad certificates/private key");;
+            .with_single_cert_with_ocsp_and_sct(certificates, privkey, ocsp, vec![])
+            .expect("bad certificates/private key");
 
         // set up remote connection to server
         let rc_config = Arc::new(config);
@@ -59,14 +115,10 @@ impl GridServer {
             Err(e) => return Err(format!("{}", e))
         };
         
-        let tcp_conn = match TcpStream::connect(tmp) {
-            Ok(a) => a,
-            Err(e) => return Err(format!("Connection failed: {}", e))
-        };
             
         // return an instance of the structure
-        Ok(GridClient {
-            socket: tcp_conn,
+        Ok(GridServer {
+            socket: todo!(),
             remote: client,
             tls_config: rc_config
         })
@@ -98,3 +150,34 @@ impl GridServer {
 }
 
 
+
+
+
+
+
+//////////////////////// MISC HELPERS ///////////////////////////
+
+/// Generates a self-signed X.509 certificate for use in the server structure
+/// 
+/// ## Params:
+/// * names: optional vector of domain names this certificate should be valid for. If not provided, defaults to "localhost"
+/// 
+/// ## Returns:
+/// * Ok: returns a CertificateStore structure for use
+/// * Err: returns a string describing the issue encountered
+pub fn gen_certificate(names: Option<Vec<String>>) -> Result<CertificateStore, String> {
+    // see if we have any names available currently, otherwise 'localhost'
+    let domains = match names {
+        Some(a) => a,
+        None => vec!["localhost".to_string()]
+    };
+
+    // build the certificate
+    let cert = match generate_simple_self_signed(domains.clone()) {
+        Ok(a) => a,
+        Err(e) => return Err(format!("Certificate generation failed: {}", e))
+    };
+
+    
+    Ok(CertificateStore::new(cert.serialize_private_key_der(), vec![], domains))
+}
