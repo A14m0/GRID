@@ -1,4 +1,5 @@
 # High Priority Tasks
+ - [ ] Finish libGRID specification
  - [ ] Finish libGRID classes and implementations
 
 # Medium Priority Tasks
