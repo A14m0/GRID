@@ -42,6 +42,7 @@ pub struct GridRequest {
     opcode: GridCode,             // OPCODE of the request. Translates to one of the enum codes
     path_size: u128,        // Size of the path segment in the payload
     metadata_size: u128,    // Size of the metadata segment in the payload
+    reserved: u128,         // Reserved for future endeavors 
     payload: Box<[u8]>      // Bytes of the payload
 }
 

@@ -2,7 +2,7 @@
 
 Remember: ***GRID!*** is ***SAFE!***
 
-1. First browser (made by our dumbasses): *GRID Runner*
+1. First browser (made by our dumbasses): *Nexus*
    1. URL bar at the bottom of the display
    2. Menu bar:
       1. Reload button
