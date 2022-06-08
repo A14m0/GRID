@@ -75,7 +75,7 @@ pub fn string_to_domain(remote: String) -> Result<(ConnectionType, String, u16),
         // connecting to IP address
         conn_type = ConnectionType::Address
     } else {
-        return Err(format!("No GRID connection specification included in {} (i.e. it is missing 'grid!' or 'grid.')", remote))
+        return Err(format!("No GRID connection specification included in {} (i.e. it is missing 'grid!' or 'grid.'), are you sure you are using the GRID protocol?", remote))
     }
 
     // now that we know what kind of connection type we have, build the other structures
