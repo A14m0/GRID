@@ -9,6 +9,7 @@ const GRID_DEFAULT_PORT: u16 = 7500;
 //////////////////////// REQUESTS ////////////////////////
 
 /// Defines the GRID request OPCODES
+#[derive(Debug)]
 pub enum GridRequestCode {
     /// Get resource at path
     GET,
@@ -16,9 +17,14 @@ pub enum GridRequestCode {
     PUT,
     /// Set?
     SET,
+    /// Client error
+    CER
 }
 
+
+
 /// Defines the GRID response OPCODES
+#[derive(Debug)]
 pub enum GridResponseCode {
     /// Response OK
     ROK,
@@ -30,20 +36,66 @@ pub enum GridResponseCode {
     BSY
 }
 
+
+
+
 /// General enum for different GRID OPCODES
+#[derive(Debug)]
 pub enum GridCode {
     Response(GridResponseCode),
     Request(GridRequestCode)
 }
 
+/// implements Into and From traits for `GridRequestCode`
+impl From<GridRequestCode> for GridCode {
+    fn from(c: GridRequestCode) -> Self {
+        GridCode::Request(c)
+    } 
+}
+
+/// implements Into and From traits for `GridResponseCode`
+impl From<GridResponseCode> for GridCode {
+    fn from(c: GridResponseCode) -> Self {
+        GridCode::Response(c)
+    } 
+}
+
+
 
 /// Defines our GRID request header
-pub struct GridRequest {
-    opcode: GridCode,             // OPCODE of the request. Translates to one of the enum codes
+#[derive(Debug)]
+pub struct GridBlock {
+    opcode: GridCode,       // OPCODE of the request. Translates to one of the enum codes
     path_size: u128,        // Size of the path segment in the payload
     metadata_size: u128,    // Size of the metadata segment in the payload
     reserved: u128,         // Reserved for future endeavors 
     payload: Box<[u8]>      // Bytes of the payload
+}
+
+impl GridBlock {
+    /// Builds a GRID request structure
+    /// 
+    /// ## Params:
+    /// * opcode: the GRID code to be used for the block
+    /// * path: optional argument providing the path of the request
+    /// * payload: the data to be sent over with the request
+    /// 
+    /// ## Returns:
+    /// * Ok: Returns a GRID request structure
+    /// * Err: Returns a string describing the issue encountered
+    pub fn new(
+        opcode: impl Into<GridCode>, 
+        path: Option<&str>, 
+        payload: Box<[u8]>
+    ) -> Result<GridBlock, String> {
+        Ok(GridBlock{
+            opcode: opcode.into(),
+            path_size: 0,
+            metadata_size: 0,
+            reserved: 0,
+            payload: Box::new([0u8])
+        })
+    }
 }
 
 
@@ -65,7 +117,9 @@ pub enum ConnectionType {
 /// ## Returns:
 ///  * Ok: returns a tuple of the type of connection, the domain/IP of the connection, and the port
 ///  * Err: returns a string describing the issue encountered
-pub fn string_to_domain(remote: String) -> Result<(ConnectionType, String, u16), String> {
+pub fn string_to_domain(
+        remote: String
+    ) -> Result<(ConnectionType, String, u16), String> {
     // make sure the string begins with "grid"
     let conn_type: ConnectionType;
     if remote.starts_with("grid!") {
@@ -115,3 +169,5 @@ pub fn string_to_domain(remote: String) -> Result<(ConnectionType, String, u16),
     // return the stuff 
     Ok((conn_type, domain, port))
 }
+
+

@@ -10,7 +10,10 @@ use rustls::{
 };
 
 
-use crate::definitions::string_to_domain;
+use crate::definitions::{
+    GridBlock,
+    string_to_domain
+};
 
 
 /// structure defining a GRID client instance
@@ -29,7 +32,10 @@ impl GridClient {
     /// 
     /// ## Returns:
     /// Returns either an intsance of the structure or an error string describing the issue encountered
-    fn new(connection: String) -> Result<Self, String>{
+    pub fn new(connection: impl Into<String>) -> Result<Self, String>{
+        // make sure we convert the thing into a string
+        let connection: String = connection.try_into().unwrap();
+
         // set up the root TLS store 
         let mut root_store = rustls::RootCertStore::empty();
         root_store.add_server_trust_anchors(
@@ -79,6 +85,21 @@ impl GridClient {
             remote: client,
             tls_config: rc_config
         })
+    }
+
+    /// Sends a GridRequest to the remote server 
+    /// 
+    /// ## Params:
+    /// * request: the GridBlock structure to be sent over
+    /// 
+    /// ## Returns:
+    /// * Ok: a response GridBlock structure from the server
+    /// * Err: a string describing the issue encountered
+    pub fn send(
+        &self,
+        request: GridBlock
+    ) -> Result<GridBlock, String> {
+        unimplemented!()
     }
 
 
