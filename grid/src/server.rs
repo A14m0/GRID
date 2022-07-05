@@ -88,7 +88,7 @@ impl GridServer {
     /// ## Returns:
     /// * Ok: an instance of a GridServer structure
     /// * Err: a string describing the issue encountered
-    fn new(port: u16, certs: Option<CertificateStore>) -> Result<Self, String>{
+    pub fn new(port: u16, certs: Option<CertificateStore>) -> Result<Self, String>{
         // see if we need to load certificates from default location or if they're pre-provided
         let c = match certs {
             Some(a) => a,
@@ -109,6 +109,18 @@ impl GridServer {
 
         // set up remote connection to server
         let rc_config = Arc::new(config);
+        
+        
+        
+        ////////////////////////////////////////////////////////////////////////
+        // THIS IS WRONG! ServerConnection IS WHAT HANDLES INBOUND CONNECTIONS,
+        // NOT FOR BINDING TO AN ADDRESS! MOVE TO DIFFERENT FUNCTION!
+        // 
+        // for example of how thats supposed to work, see the following:
+        // https://github.com/rustls/rustls/blob/main/rustls-mio/examples/tlsserver.rs
+        // 
+        // REWORK!!!
+        ////////////////////////////////////////////////////////////////////////
         
         // build client connection
         let client = match ServerConnection::new(rc_config.clone()){
