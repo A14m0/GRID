@@ -86,7 +86,8 @@ impl GridServer {
     /// * port: the port to be listening on
     /// 
     /// ## Returns:
-    /// Returns either an intsance of the structure or an error string describing the issue encountered
+    /// * Ok: an instance of a GridServer structure
+    /// * Err: a string describing the issue encountered
     fn new(port: u16, certs: Option<CertificateStore>) -> Result<Self, String>{
         // see if we need to load certificates from default location or if they're pre-provided
         let c = match certs {
