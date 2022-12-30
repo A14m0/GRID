@@ -49,7 +49,7 @@ num my_func(num reference)(num passed_by_value) {
 All types provide an "error" value associated with them. So for example, a 
 number variable can either be valid, with its error code signaling such, or it
 can be in a state called "errored", where if it is used before it is set causes
-an error to be signaled. 
+an error to be signalled. 
 
 This check can be ignored by using the `nocheck` scope around a portion of code.
 However, `nocheck` only works for the lines included in its scope. The bodies of 
