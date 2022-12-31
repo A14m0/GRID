@@ -1,0 +1,13 @@
+[package]
+name = "webfreq"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = "0.11.13"
+tokio = { version = "1", features = ["full"] }
+url = "2.2.2"
+colored = "2.0.0"
+regex = "1.7.0"

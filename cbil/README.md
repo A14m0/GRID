@@ -11,7 +11,7 @@ The below holds the primary requirements of CBIL
 4. Must support Unicode initally
 5. Must be able to support default parameters for functions
 6. Must support overloading functions by arguments and return types
-7. Must support variable-based error handling on-use
+7. Must support variable-based on-use error handling 
 
 
 ## Primitives
@@ -53,7 +53,7 @@ an error to be signalled.
 
 This check can be ignored by using the `nocheck` scope around a portion of code.
 However, `nocheck` only works for the lines included in its scope. The bodies of 
-functions included in `nocheck` are *not* subject to its exception so if a 
+functions called in `nocheck` are *not* subject to its exception so if a 
 variable in a function errors out and it gets used the error is not ignored, 
 even though its called from a `nocheck` scope.
 
