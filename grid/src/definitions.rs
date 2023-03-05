@@ -3,7 +3,7 @@
 //////////////////////// DEFAULTS ////////////////////////
 
 /// Default GRID connection port
-const GRID_DEFAULT_PORT: u16 = 7500;
+pub const GRID_DEFAULT_PORT: u16 = 7500;
 
 
 //////////////////////// REQUESTS ////////////////////////
@@ -104,6 +104,7 @@ impl GridBlock {
 //////////////////////// HELPERS ////////////////////////
 
 /// Defines either IP or domain name connection types
+#[derive(Debug, PartialEq)]
 pub enum ConnectionType {
     Address,
     Domain
@@ -118,10 +119,11 @@ pub enum ConnectionType {
 ///  * Ok: returns a tuple of the type of connection, the domain/IP of the connection, and the port
 ///  * Err: returns a string describing the issue encountered
 pub fn string_to_domain(
-        remote: String
+        remote: impl Into<String>
     ) -> Result<(ConnectionType, String, u16), String> {
     // make sure the string begins with "grid"
     let conn_type: ConnectionType;
+    let remote: String = remote.try_into().unwrap();
     if remote.starts_with("grid!") {
         // connecting to domain name
         conn_type = ConnectionType::Domain;
