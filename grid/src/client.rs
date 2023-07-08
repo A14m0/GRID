@@ -1,3 +1,4 @@
+use std::io::{Write, Read};
 // Defines all client-related functions and structures
 use std::sync::Arc;
 use std::net::{SocketAddr, ToSocketAddrs};
@@ -31,8 +32,10 @@ impl GridClient {
     /// * connection: String formatted as `"grid!domain:port"` or `"grid.ip:port"`
     /// 
     /// ## Returns:
-    /// Returns either an intsance of the structure or an error string describing the issue encountered
-    pub fn new(connection: impl Into<String>) -> Result<Self, String>{
+    /// Returns either an instance of the structure or an error string describing the issue encountered
+    pub fn new(
+        connection: impl Into<String>
+    ) -> Result<Self, String>{
         // make sure we convert the thing into a string
         let connection: String = connection.try_into().unwrap();
 
@@ -96,10 +99,31 @@ impl GridClient {
     /// * Ok: a response GridBlock structure from the server
     /// * Err: a string describing the issue encountered
     pub fn send(
-        &self,
-        request: GridBlock
+        &mut self,
+        request: &mut GridBlock
     ) -> Result<GridBlock, String> {
-        unimplemented!()
+        // first we need to serialize the request
+        let mut serialized_request = request.serialize();
+        println!("Serialized: {:?}", serialized_request);
+
+        // then we can send it to the connected server
+        match self.remote.writer().write_all(&mut serialized_request) {
+            Ok(_) => (),
+            Err(e) => return Err(format!("Failed to send request: {}", e))
+        };
+
+        // now we read back from the server
+        while !self.remote.wants_read() {std::thread::sleep(std::time::Duration::from_millis(10))}
+        let mut response_raw: Vec<u8> = Vec::new();
+        match self.remote.reader().read(&mut response_raw) {
+            Ok(a) => println!("Read {}", a),
+            Err(e) => return Err(format!("Failed to recieve response from server: {}",e)) 
+        };
+
+        println!("Response: {:?}", response_raw);
+
+        // deserialize the bytes and return them
+        GridBlock::from_bytes(response_raw)
     }
 
 

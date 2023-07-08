@@ -35,7 +35,7 @@ impl CertificateStore {
     /// 
     /// ## Returns:
     /// * instance of the structure
-    fn new(priv_key: Vec<u8>, ocsp: Vec<u8>, domains: Vec<String>) -> Self {
+    pub fn new(priv_key: Vec<u8>, ocsp: Vec<u8>, domains: Vec<String>) -> Self {
         CertificateStore{priv_key, ocsp, domains}
     }
 
@@ -46,15 +46,15 @@ impl CertificateStore {
     /// 
     /// ## Returns:
     /// * a rustls::PrivateKey structure
-    fn get_privkey(self) -> rustls::PrivateKey {
+    pub fn get_privkey(self) -> rustls::PrivateKey {
         rustls::PrivateKey(self.priv_key.clone())
     }
 
-    fn get_ocsp(self) -> Vec<u8> {
+    pub fn get_ocsp(self) -> Vec<u8> {
         self.ocsp.clone()
     }
 
-    fn get_domains(self) -> Vec<String> {
+    pub fn get_domains(self) -> Vec<String> {
         self.domains.clone()
     }
 
@@ -66,7 +66,7 @@ impl CertificateStore {
     /// ## Returns:
     /// * Ok: returns a vector of `rustls::Certificate` structures
     /// * Err: returns a string describing the issue encountered
-    fn get_certificates(self) -> Result<Vec<rustls::Certificate>,String> {
+    pub fn get_certificates(self) -> Result<Vec<rustls::Certificate>,String> {
         todo!()
     }
 }
