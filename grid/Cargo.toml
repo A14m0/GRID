@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 rustls = "0.20.6"
 webpki-roots = "0.22.3"
-mio ={version="0.8.3", features=["net"]}
+mio ={version="0.8.3", features=["net", "os-poll"]}
 rcgen = "0.9.2"
