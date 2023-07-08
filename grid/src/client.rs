@@ -1,4 +1,4 @@
-use std::io::{Write, Read};
+use std::io::{Write, Read, self};
 // Defines all client-related functions and structures
 use std::sync::Arc;
 use std::net::{SocketAddr, ToSocketAddrs};
@@ -7,7 +7,8 @@ use mio::net::TcpStream;
 
 use rustls::{
     ClientConfig,
-    ClientConnection
+    ClientConnection, 
+    Stream
 };
 
 
@@ -20,7 +21,7 @@ use crate::definitions::{
 /// structure defining a GRID client instance
 pub struct GridClient {
     socket: TcpStream,
-    remote: ClientConnection,
+    client: ClientConnection,
     tls_config: Arc<ClientConfig>
 }
 
@@ -70,22 +71,22 @@ impl GridClient {
         };
 
         // build client connection
-        let client = match ClientConnection::new(rc_config.clone(), remote){
+        let mut client = match ClientConnection::new(rc_config.clone(), remote){
             Ok(a) => a,
             Err(e) => return Err(format!("{}", e))
         };
         
         let tmp = GridClient::build_socket_connect(target_domain.1, target_domain.2)?;
         
-        let tcp_conn = match TcpStream::connect(tmp) {
+        let mut tcp_conn = match TcpStream::connect(tmp) {
             Ok(a) => a,
             Err(e) => return Err(format!("Connection failed: {}", e))
         };
-            
+
         // return an instance of the structure
         Ok(GridClient {
             socket: tcp_conn,
-            remote: client,
+            client,
             tls_config: rc_config
         })
     }
@@ -103,19 +104,23 @@ impl GridClient {
         request: &mut GridBlock
     ) -> Result<GridBlock, String> {
         // first we need to serialize the request
-        let mut serialized_request = request.serialize();
+        let serialized_request = request.serialize();
         println!("Serialized: {:?}", serialized_request);
 
+        self.client.writer().write(&serialized_request);
+
         // then we can send it to the connected server
-        match self.remote.writer().write_all(&mut serialized_request) {
-            Ok(_) => (),
-            Err(e) => return Err(format!("Failed to send request: {}", e))
-        };
+        while self.client.wants_write() {
+            match self.client.write_tls(&mut self.socket){//.write_all(&mut serialized_request) {
+                Ok(_) => (),
+                Err(e) => return Err(format!("{}", e))
+            };
+        }
+
 
         // now we read back from the server
-        while !self.remote.wants_read() {std::thread::sleep(std::time::Duration::from_millis(10))}
         let mut response_raw: Vec<u8> = Vec::new();
-        match self.remote.reader().read(&mut response_raw) {
+        match self.read_into(&mut response_raw) {
             Ok(a) => println!("Read {}", a),
             Err(e) => return Err(format!("Failed to recieve response from server: {}",e)) 
         };
@@ -124,6 +129,59 @@ impl GridClient {
 
         // deserialize the bytes and return them
         GridBlock::from_bytes(response_raw)
+    }
+
+    /// Helper function to read TLS data into a buffer
+    /// 
+    /// ## Params:
+    /// `buff`: A buffer to write the data into
+    /// 
+    /// ## Returns:
+    /// Ok: Returns the number of bytes read from the connection
+    /// Err: Returns a string that describes the error encountered
+    pub fn read_into(
+        &mut self,
+        buff: &mut Vec<u8>,
+    ) -> Result<usize, String> {
+        // first read TLS data
+        if self.client.wants_read() {
+            let mut blocked = true;
+            
+            while blocked {
+                let count = match self.client.read_tls(&mut self.socket) {
+                    Ok(a) => {blocked = false; a},
+                    Err(e) => {
+                        if e.kind() != io::ErrorKind::WouldBlock {
+                            return Err(format!("Failed to get tls data because {}", e))
+                        }
+                        0
+                    }
+                };
+                
+            }
+    
+            // next we process the packets
+            let io_state = match self.client.process_new_packets() {
+                Ok(a) => a,
+                Err(e) => return Err(format!("TLS error {}", e))
+            };
+            
+            if io_state.peer_has_closed() {
+                return Err(format!("remote closed"))
+            }
+    
+            // and finally we read back from the buffer
+            let ret_cnt = match self.client.reader().read(buff){
+                Ok(a) => a,
+                Err(e) => return Err(format!("TLS read failed {}", e))
+            };
+            
+            return Ok(ret_cnt);
+        }
+        
+        // nothing to read, bail
+        Err(format!("no data available for reading"))
+    
     }
 
 
