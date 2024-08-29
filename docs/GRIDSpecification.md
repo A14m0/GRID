@@ -15,6 +15,8 @@ Request:
 * ABT		Abort
 * INF		Info
 * TWO		???
+* PPS		Pipe Server
+* PPC		Pipe Client
 
 Response:
 * ROK		Response OK
@@ -22,6 +24,8 @@ Response:
 * NOF		Not Found
 * BSY		Busy
 * RER		Request Error
+* DNY		Deny
+* ECH		Echo - request more information from the client (but can only be as a repsponse)
 
 ## Request Header
 Each GRID request will be led by a 33-byte header which includes the following
